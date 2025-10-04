@@ -66,23 +66,27 @@ function _withdrawlRequierements(uint256 value, uint256 cap, uint256 balance) pr
 
 ## Requisitos
 
-- **Remix + MetaMask** (despliegue rápido)  
- 
+- **Remix + MetaMask** (despliegue rápido)
+
 ---
 
 ## Cómo interactuar con el contrato
 
 ### Remix
 
-- **Deploy**
-  Poner la cantiadad de wei maximas , cantidad de transferencias maximas y deployar en remix.
-por ejemplo 50000,20  essto nos da maximas extracciones de 50000 y hasta 20 depositos totales.
+- **Deploy**  
+  Ingresá los parámetros del constructor y desplegá en Remix con MetaMask (red **Sepolia**):
+  - `capWei`: cantidad máxima por **retiro** (en **wei**).
+  - `maxTransactions`: cantidad máxima de **depósitos** totales.
+  
+  **Ejemplo**: `50000, 20` → retiros de hasta **50 000 wei** y hasta **20 depósitos** totales.
+
 - **Depositar**  
-  Usar `deposit()` y setear `Value` en wei (arriba del botón).  
+  Usá `deposit()` y seteá `Value` en wei (arriba del botón).  
   Actualiza `balances[msg.sender]` y `transactionsCounter`; emite `depositDone`.
 
 - **Retirar**  
-  Llamar `withdrawal(value)` (wei).  
+  Llamá `withdrawal(value)` (wei).  
   Valida contra `WITHDRAW_MAX` y `balances[msg.sender]`; emite `withdrawalDone`.
 
 - **Ver estadísticas**  
@@ -91,7 +95,15 @@ por ejemplo 50000,20  essto nos da maximas extracciones de 50000 y hasta 20 depo
 - **Getters útiles**  
   `balances(<address>)`, `WITHDRAW_MAX()`, `bankCap()`, `transactionsCounter()`, `withdrawalCounter()`.
 
-ecimal>','<maxTxs_decimal>']
-)
-```
+---
 
+## Notas
+
+- Asegurate de compilar con **Solidity 0.8.26** y mantener las mismas opciones si luego vas a verificar en Etherscan.
+- Si vas a verificar manualmente, recordá que los argumentos del constructor deben ir **ABI-encoded** y coincidir exactamente con los usados en el despliegue.
+
+---
+
+## Licencia
+
+**MIT**.
