@@ -1,0 +1,341 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "capWei",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxTransactions",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "requested",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "cap",
+						"type": "uint256"
+					}
+				],
+				"name": "capExceeded",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "have",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "need",
+						"type": "uint256"
+					}
+				],
+				"name": "insufficientBalance",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "transactionFailed",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "thief",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "victim",
+						"type": "address"
+					}
+				],
+				"name": "wrongUser",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "zeroDeposit",
+				"type": "error"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "client",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "depositDone",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "client",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawalDone",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "WITHDRAW_MAX",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "client",
+						"type": "address"
+					}
+				],
+				"name": "balances",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "bankCap",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "bankStats",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "totalDeposits",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalwithdrawal",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "deposit",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "transactionsCounter",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawal",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "withdrawalCounter",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Miosio",
+			"custom:security": "No usar en producción.",
+			"kind": "dev",
+			"methods": {
+				"bankStats()": {
+					"details": "esta función devuelve los depitos y retiros hechos"
+				},
+				"deposit()": {
+					"details": "esta función debe sumar el valor transferiado a la cuenta del usuario a su balance actualesta función debe emitir un evento informando la transaccion "
+				},
+				"withdrawal(uint256)": {
+					"details": "esta función debe restar el valor solicitado a la cuenta del usuario a su balance actualesta función debe emitir un evento informando la transaccion "
+				}
+			},
+			"title": "Contrato KipuBank",
+			"version": 1
+		},
+		"userdoc": {
+			"errors": {
+				"capExceeded(uint256,uint256)": [
+					{
+						"notice": "error emitido cuando quiere retirar mas fondos idel total"
+					}
+				],
+				"insufficientBalance(uint256,uint256)": [
+					{
+						"notice": "error emitido cuando quiere retirar fondos insuficientes"
+					}
+				],
+				"transactionFailed()": [
+					{
+						"notice": "error emitido cuando falla una transacción"
+					}
+				],
+				"wrongUser(address,address)": [
+					{
+						"notice": "error emitido cuando una dirección diferente al beneficiario intenta retirar"
+					}
+				],
+				"zeroDeposit()": [
+					{
+						"notice": "error emitido cuando se ahce una transferencia de 0 wei"
+					}
+				]
+			},
+			"events": {
+				"depositDone(address,uint256)": {
+					"notice": "evento emitido cuando se realiza un nuevo deposito "
+				},
+				"withdrawalDone(address,uint256)": {
+					"notice": "evento emitido cuando se realiza un retiro"
+				}
+			},
+			"kind": "user",
+			"methods": {
+				"WITHDRAW_MAX()": {
+					"notice": "mapping para almacenar el valor del cliente "
+				},
+				"balances(address)": {
+					"notice": "mapping para almacenar el valor de los clientes "
+				},
+				"bankCap()": {
+					"notice": "Limite maximo de transferencias"
+				},
+				"bankStats()": {
+					"notice": "función para ver el estado de las transacciones"
+				},
+				"deposit()": {
+					"notice": "función para depositar"
+				},
+				"transactionsCounter()": {
+					"notice": "Contador de transacciones"
+				},
+				"withdrawal(uint256)": {
+					"notice": "función para retirar"
+				},
+				"withdrawalCounter()": {
+					"notice": "contador de extracciones"
+				}
+			},
+			"notice": "Este es un contrato con fines educativos.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/KipuBank.sol": "KipuBank"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/KipuBank.sol": {
+			"keccak256": "0x877ba23883c25d26eab6cbc13c827a07092d191055be797e59f786506326f7a3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9c27f260008f988bf0e162c29b6870ce92a049b46ba50d206e0d93d6ae3a5a02",
+				"dweb:/ipfs/QmeDmhQo7fjTdfkL8EEch7eVvLk1D8Syyx7RD6VuGEpRiP"
+			]
+		}
+	},
+	"version": 1
+}
