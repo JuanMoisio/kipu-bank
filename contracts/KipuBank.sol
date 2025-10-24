@@ -1,143 +1,211 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity  > 0.8.26;
-
-/*Objetivos del examen
-
-Aplicar conceptos básicos de Solidity aprendidos en clase.
-Seguir patrones de seguridad.
-Usar comentarios y una estructura limpia para mejorar la legibilidad y el mantenimiento del contrato.
-Desplegar un contrato inteligente completamente funcional en una testnet.
-Crear un repositorio de GitHub que documente y muestre tu proyecto.
-Descripción y requisitos de la tarea
-
-Tu tarea es recrear el contrato inteligente KipuBank con funcionalidad completa y documentación, según se describe a continuación.
-
-Características de KipuBank:
-
-
-Usar errores personalizados en lugar de require strings.
-Respetar el patrón checks-effects-interactions y las convenciones de nombres.
-Usar modificadores cuando sea apropiado para validar la lógica.
-Manejar transferencias nativas de forma segura.
-Mantener las variables de estado limpias, legibles y bien comentadas.
-Agregar comentarios NatSpec para cada función, error y variable de estado.
-Aplicar convenciones de nombres adecuadas.
-*/
-
-
+pragma solidity   > 0.8.26;
 
 /**
-	*@title Contrato KipuBank
-	*@notice Este es un contrato con fines educativos.
-	*@author Miosio
-	*@custom:security No usar en producción.
-*/
-
+ * @title KipuBank Contract
+ * @notice Educational-only contract. Do not use in production.
+ * @author JuanMoisio
+ * @custom:security Not for production use.
+ */
 contract KipuBank {
 
-/*///////////////////////
-					Variables
-	///////////////////////*/
-	
-	
-	///@notice mapping para almacenar el valor de los clientes 
-	mapping(address client => uint256 amount) public balances;
-	
-    ///@notice mapping para almacenar el valor del cliente 
+    /*///////////////////////
+                        Variables
+    ///////////////////////*/
+    
+    /// @notice Mapping that stores each client's balance in wei.
+    mapping(address client => uint256 amount) public balances;
+    
+    /// @notice Immutable per-withdrawal maximum (in wei).
     uint256 public immutable WITHDRAW_MAX;
 
-    ///@notice Limite maximo de transferencias
-    uint256 public bankCap;
-    ///@notice Contador de transacciones
+    /// @notice Immutable global cap of total allowed transactions (deposits).
+    uint256 public  immutable bankCap;
+
+    /// @notice Global counter of successful deposit transactions.
     uint256 public transactionsCounter;
-    ///@notice contador de extracciones
+
+    /// @notice Global counter of successful withdrawals.
     uint256 public withdrawalCounter;
 
-	/*///////////////////////
-						Events
-	////////////////////////*/
-	///@notice evento emitido cuando se realiza un nuevo deposito 
-	event depositDone(address client, uint256 amount);
-	///@notice evento emitido cuando se realiza un retiro
-	event withdrawalDone(address client, uint256 amount);
+
+	 /*///////////////////////
+                        Events
+    ////////////////////////*/
+    /// @notice Emitted when a new deposit is completed.
+    /// @param client Address that deposited.
+    /// @param amount Amount deposited in wei.
+    event depositDone(address client, uint256 amount);
+	
+    /// @notice Emitted when a withdrawal is completed.
+    /// @param client Address that withdrew.
+    /// @param amount Amount withdrawn in wei.
+    event withdrawalDone(address client, uint256 amount);
 	
 	/*///////////////////////
 						Errors
 	///////////////////////*/
-	///@notice error emitido cuando falla una transacción
-	error transactionFailed();
-    	///@notice error emitido cuando quiere retirar fondos insuficientes
+
+	/// @notice Thrown when a low-level ETH transfer fails.
+    error transactionFailed();
+
+    /// @notice Thrown when attempting to withdraw more than the available balance.
+    /// @param have Current available balance.
+    /// @param need Requested amount.
     error insufficientBalance(uint256 have, uint256 need);
-    ///@notice error emitido cuando quiere retirar mas fondos idel total
+
+    /// @notice Thrown when requested amount exceeds the per-withdrawal cap.
+    /// @param requested Requested amount.
+    /// @param cap Current configured cap.
     error capExceeded(uint256 requested, uint256 cap);
-	///@notice error emitido cuando una dirección diferente al beneficiario intenta retirar
-	error wrongUser(address thief, address victim);
-    ///@notice error emitido cuando se ahce una transferencia de 0 wei
+
+	/// @notice Thrown when an address different than the beneficiary tries to withdraw (not used in this version).
+    /// @param thief Caller address.
+    /// @param victim Intended beneficiary.
+    error wrongUser(address thief, address victim);
+
+    /// @notice Thrown when the global transactions limit is reached or exceeded.
+    /// @param transactions Current number of transactions.
+    /// @param limit Global transactions limit.
+    error maxTransactionsLimit(uint256 transactions, uint256 limit);
+
+     /// @notice Thrown when trying to deposit 0 wei.
     error zeroDeposit();
-    /*///////////////////////
-					Functions
-	///////////////////*/
+
+    /// @notice Thrown when deploying with a WITHDRAW_MAX less than or equal to zero (educational message).
+    error noCapWei();
+
+    /// @notice Thrown when deploying with a bankCap less than or equal to zero (educational message).
+    error noTransactions();
+
+    /// @notice Thrown on reentrancy attempts.
+    error reentrancy();
+
+    /**
+     * @notice Initializes the contract with the per-withdrawal cap and the global transactions limit.
+     * @dev Educational checks kept as provided by the author.
+     * @param capWei Per-withdrawal maximum (wei).
+     * @param maxTransactions Global maximum number of transactions (deposits).
+     */
     constructor(uint256 capWei, uint256 maxTransactions) {
-        require(capWei > 0, "cap = 0");
-        WITHDRAW_MAX = capWei; // asignacion unica (inmutable)
-        require(maxTransactions > 0, "At least 1 transaction");
+        if(capWei < 0) revert noCapWei();
+        WITHDRAW_MAX = capWei; 
+        if(maxTransactions < 0) revert noTransactions();
         bankCap = maxTransactions;
     }
 
+        /*///////////////////////
+            Modifiers
+    ///////////////////////*/
     
-    /**
-		*@notice función para depositar
-		*@dev esta función debe sumar el valor transferiado a la cuenta del usuario a su balance actual
-		*@dev esta función debe emitir un evento informando la transaccion 
-	*/
-	function deposit() external payable {
-        _depostiRequierements(msg.value);
-		balances[msg.sender] = balances[msg.sender] += msg.value;
-        unchecked{
-        transactionsCounter = transactionsCounter + 1;
-        }
-		emit depositDone(msg.sender, msg.value);
-	}
-    /**
-		*@notice función para retirar
-		*@dev esta función debe restar el valor solicitado a la cuenta del usuario a su balance actual
-		*@dev esta función debe emitir un evento informando la transaccion 
-	*/
-    function withdrawal(uint256 value) external payable {
-        _withdrawlRequierements(value, WITHDRAW_MAX, balances[msg.sender]);
+    /// @dev Prevents zero-wei deposits.
+    modifier nonZeroValue() {
+        if (msg.value == 0) revert zeroDeposit();
+        _;
+    }
 
-        balances[msg.sender] = balances[msg.sender] - value;
-        (bool ok, ) = msg.sender.call{value: value}("");
-        if(!ok)revert transactionFailed();
-        unchecked{
-        withdrawalCounter = withdrawalCounter + 1;
+    /// @dev Ensures the global transactions counter has not reached the bank cap.
+    modifier underTxCap() {
+        if (transactionsCounter >= bankCap) {
+            revert maxTransactionsLimit(transactionsCounter, bankCap);
         }
-        emit withdrawalDone(msg.sender,value);
+        _;
+    }
+
+     /// @dev Post-action: increments the deposit counter after function body executes successfully.
+    modifier countDeposit() {
+        _;
+        transactionsCounter += 1;
+    }
+    
+    uint256 private _locked; // 0 = free, 1 = locked
+
+    /// @dev Simple non-reentrancy guard.
+    modifier nonReentrant() {
+        if (_locked == 1) revert reentrancy();
+        _locked = 1;
+        _;
+        _locked = 0;
+    }
+
+    /// @dev Post-action: increments the withdrawal counter after function body executes successfully.
+    modifier countWithdrawal() {
+        _;
+        withdrawalCounter += 1;
+    }
+
+     /**
+     * @dev Ensures the caller has enough balance to cover `amount`.
+     * @param amount Amount required (wei).
+     */
+    modifier hasFunds(uint256 amount) {
+        uint256 bal = balances[msg.sender];
+        if (amount > bal) revert insufficientBalance(bal, amount);
+        _;
     }
     /**
-		*@notice función para ver el estado de las transacciones
-		*@dev esta función devuelve los depitos y retiros hechos
-	*/
+     * @dev Ensures the withdrawal `amount` does not exceed the configured per-withdrawal cap.
+     * @param amount Amount to withdraw (wei).
+     */
+    modifier withinWithdrawCap(uint256 amount) {
+        if (amount > WITHDRAW_MAX) revert capExceeded(amount, WITHDRAW_MAX);
+        _;
+    }
+
+
+
+
+    /*///////////////////////
+					Functions
+	///////////////////*/
+
+    
+    
+    /**
+     * @notice Deposits the sent ETH (`msg.value`) into the caller's balance.
+     * @dev Order of execution: PRE (nonZeroValue, underTxCap) → BODY → POST (countDeposit).
+     *      Emits {depositDone}.
+     */
+    function deposit() external payable nonZeroValue underTxCap countDeposit{
+        balances[msg.sender] += msg.value;
+        emit depositDone(msg.sender, msg.value);
+    }
+
+
+    /**
+     * @notice Withdraws `value` wei from the caller's balance and transfers it to the caller.
+     * @dev Order of execution: PRE (withinWithdrawCap, hasFunds, nonReentrant) → BODY → POST (countWithdrawal).
+     *      Uses a low-level call and reverts on failure. Emits {withdrawalDone}.
+     * @param value Amount to withdraw in wei.
+     */
+    function withdrawal(uint256 value) external  nonReentrant withinWithdrawCap(value) hasFunds(value) countWithdrawal{
+        _debit(msg.sender, value);
+        (bool ok, ) = msg.sender.call{value: value}("");
+        if(!ok)revert transactionFailed();
+        emit withdrawalDone(msg.sender,value);
+    }
+
+
+    /**
+     * @notice Returns global counters for deposits and withdrawals.
+     * @return totalDeposits Number of successful deposits.
+     * @return totalwithdrawal Number of successful withdrawals.
+     */
     function bankStats()external view returns ( uint256 totalDeposits, uint256 totalwithdrawal) {
-        
         totalDeposits = transactionsCounter;
         totalwithdrawal = withdrawalCounter;
     }
+
+
     /**
-		*@notice función pprivate que valida previemnte al deposito
-		*@dev esta función verifica que el deposito no sea 0 y que no se halla excedido el limite de trasacciones del banco
-	*/
-    function _depostiRequierements(uint256 value) private view {
-        if (value == 0) revert zeroDeposit();
-        if (transactionsCounter >= bankCap) revert capExceeded(transactionsCounter, bankCap);
-    }
-    /**
-		*@notice función pprivate que valida previemnte al retiro
-		*@dev esta función verifica que tenga fondos y no exceda el monto maximo de retiro
-	*/
-    function _withdrawlRequierements(uint256 value, uint256 cap, uint256 balance) private pure {
-        if (value > cap) revert capExceeded(value, cap);
-        if (value > balance) revert insufficientBalance(balance, value);
+     * @dev Internal helper that debits `amount` from `user`'s balance.
+     * @param user Address whose balance will be debited.
+     * @param amount Amount to debit (wei).
+     */
+    function _debit(address user, uint256 amount) private {
+        uint256 bal = balances[user];             
+        if (amount > bal) revert insufficientBalance(bal, amount);
+        unchecked { balances[user] = bal - amount; } 
     }
 }
