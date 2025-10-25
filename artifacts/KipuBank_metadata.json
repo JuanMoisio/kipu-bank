@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.30+commit.73712a01"
+		"version": "0.8.26+commit.8a97fa7a"
 	},
 	"language": "Solidity",
 	"output": {
@@ -51,6 +51,17 @@
 					}
 				],
 				"name": "insufficientBalance",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "transactionsLimit",
+						"type": "uint256"
+					}
+				],
+				"name": "maxTransactionsLimit",
 				"type": "error"
 			},
 			{
@@ -249,12 +260,17 @@
 			"errors": {
 				"capExceeded(uint256,uint256)": [
 					{
-						"notice": "error emitido cuando quiere retirar mas fondos idel total"
+						"notice": "error emitido cuando quiere retirar mas fondos del total"
 					}
 				],
 				"insufficientBalance(uint256,uint256)": [
 					{
 						"notice": "error emitido cuando quiere retirar fondos insuficientes"
+					}
+				],
+				"maxTransactionsLimit(uint256)": [
+					{
+						"notice": "error emitido cuando se llega al maximo de transacicones permitias totales"
 					}
 				],
 				"transactionFailed()": [
@@ -269,7 +285,7 @@
 				],
 				"zeroDeposit()": [
 					{
-						"notice": "error emitido cuando se ahce una transferencia de 0 wei"
+						"notice": "error emitido cuando se hace una transferencia de 0 wei"
 					}
 				]
 			},
@@ -316,7 +332,7 @@
 		"compilationTarget": {
 			"contracts/KipuBank.sol": "KipuBank"
 		},
-		"evmVersion": "prague",
+		"evmVersion": "cancun",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -329,11 +345,11 @@
 	},
 	"sources": {
 		"contracts/KipuBank.sol": {
-			"keccak256": "0x877ba23883c25d26eab6cbc13c827a07092d191055be797e59f786506326f7a3",
+			"keccak256": "0x6fee62332f726e024f8a4b00b8a96ee4663505dc99b79f2176afd4812af4f744",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9c27f260008f988bf0e162c29b6870ce92a049b46ba50d206e0d93d6ae3a5a02",
-				"dweb:/ipfs/QmeDmhQo7fjTdfkL8EEch7eVvLk1D8Syyx7RD6VuGEpRiP"
+				"bzz-raw://f8ce1faa8d0bb0ba3f52001dc7365f173d115431a789a1c609cdd8d7eb5d1adc",
+				"dweb:/ipfs/QmbPotetCtuMiHWX8JJym2oWJqVPeqHXNs3R26fTqzmC5n"
 			]
 		}
 	},
