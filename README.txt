@@ -1,28 +1,109 @@
-REMIX DEFAULT WORKSPACE
+# KipuBank — README
 
-Remix default workspace is present when:
-i. Remix loads for the very first time 
-ii. A new workspace is created with 'Default' template
-iii. There are no files existing in the File Explorer
+## Descripción
 
-This workspace contains 3 directories:
+**KipuBank** es un contrato educativo en Solidity que implementa una bóveda simple de ETH por usuario con:
 
-1. 'contracts': Holds three contracts with increasing levels of complexity.
-2. 'scripts': Contains four typescript files to deploy a contract. It is explained below.
-3. 'tests': Contains one Solidity test file for 'Ballot' contract & one JS test file for 'Storage' contract.
+- Depósitos de tokens nativos (ETH).
+- Retiros con **tope fijo por transacción** (`WITHDRAW_MAX`, inmutable definido al desplegar).
+- **Límite global** de capacidad de operaciones de depósito mediante un contador (`bankCap` = cantidad máxima de depósitos permitidos).
+- Contadores globales de **depósitos** y **retiros**.
+- Buenas prácticas: errores personalizados, patrón *checks-effects-interactions*, envío nativo seguro y validaciones privadas.
 
-SCRIPTS
+> **Aviso**: contrato con fines educativos. No usar en producción.
 
-The 'scripts' folder has four typescript files which help to deploy the 'Storage' contract using 'web3.js' and 'ethers.js' libraries.
+---
 
-For the deployment of any other contract, just update the contract name from 'Storage' to the desired contract and provide constructor arguments accordingly 
-in the file `deploy_with_ethers.ts` or  `deploy_with_web3.ts`
+## Características principales
 
-In the 'tests' folder there is a script containing Mocha-Chai unit tests for 'Storage' contract.
+- `WITHDRAW_MAX` (`immutable`): tope de retiro por transacción fijado al desplegar.
+- `bankCap`: máximo de depósitos permitidos (contador de operaciones de depósito).
+- Contadores:
+  - `transactionsCounter`: total de depósitos.
+  - `withdrawalCounter`: total de retiros.
 
-To run a script, right click on file name in the file explorer and click 'Run'. Remember, Solidity file must already be compiled.
-Output from script will appear in remix terminal.
+---
 
-Please note, require/import is supported in a limited manner for Remix supported modules.
-For now, modules supported by Remix are ethers, web3, swarmgw, chai, multihashes, remix and hardhat only for hardhat.ethers object/plugin.
-For unsupported modules, an error like this will be thrown: '<module_name> module require is not supported by Remix IDE' will be shown.
+## Interfaz pública (resumen)
+
+**Variables de estado**
+- `mapping(address => uint256) public balances`
+- `uint256 public immutable WITHDRAW_MAX`
+- `uint256 public bankCap`
+- `uint256 public transactionsCounter`
+- `uint256 public withdrawalCounter`
+
+**Eventos**
+```solidity
+event depositDone(address client, uint256 amount);
+event withdrawalDone(address client, uint256 amount);
+```
+
+**Errores personalizados**
+```solidity
+error transactionFailed();
+error insufficientBalance(uint256 have, uint256 need);
+error capExceeded(uint256 requested, uint256 cap);
+error wrongUser(address thief, address victim);
+error zeroDeposit();
+```
+
+**Funciones**
+```solidity
+constructor(uint256 capWei, uint256 maxTransactions)
+function deposit() external payable
+function withdrawal(uint256 value) external
+function bankStats() external view returns (uint256 totalDeposits, uint256 totalwithdrawal)
+```
+
+**Funciones privadas (ejemplos)**
+```solidity
+function _depostiRequierements(uint256 value) private view
+function _withdrawlRequierements(uint256 value, uint256 cap, uint256 balance) private pure
+```
+
+---
+
+## Requisitos
+
+- **Remix + MetaMask** (despliegue rápido)
+
+---
+
+## Cómo interactuar con el contrato
+
+### Remix
+
+- **Deploy**  
+  Ingresá los parámetros del constructor y desplegá en Remix con MetaMask (red **Sepolia**):
+  - `capWei`: cantidad máxima por **retiro** (en **wei**).
+  - `maxTransactions`: cantidad máxima de **depósitos** totales.
+  
+  **Ejemplo**: `50000, 20` → retiros de hasta **50 000 wei** y hasta **20 depósitos** totales.
+
+- **Depositar**  
+  Usá `deposit()` y seteá `Value` en wei (arriba del botón).  
+  Actualiza `balances[msg.sender]` y `transactionsCounter`; emite `depositDone`.
+
+- **Retirar**  
+  Llamá `withdrawal(value)` (wei).  
+  Valida contra `WITHDRAW_MAX` y `balances[msg.sender]`; emite `withdrawalDone`.
+
+- **Ver estadísticas**  
+  `bankStats()` devuelve `(totalDeposits, totalwithdrawal)`.
+
+- **Getters útiles**  
+  `balances(<address>)`, `WITHDRAW_MAX()`, `bankCap()`, `transactionsCounter()`, `withdrawalCounter()`.
+
+---
+
+## Notas
+
+- Asegurate de compilar con **Solidity 0.8.26** y mantener las mismas opciones si luego vas a verificar en Etherscan.
+- Si vas a verificar manualmente, recordá que los argumentos del constructor deben ir **ABI-encoded** y coincidir exactamente con los usados en el despliegue.
+
+---
+
+## Licencia
+
+**MIT**.
