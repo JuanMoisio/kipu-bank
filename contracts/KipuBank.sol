@@ -2,13 +2,18 @@
 
 pragma solidity   > 0.8.26;
 
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+
+
 /**
  * @title KipuBank Contract
  * @notice Educational-only contract. Do not use in production.
  * @author JuanMoisio
  * @custom:security Not for production use.
  */
-contract KipuBank {
+contract KipuBank is Ownable, Pausable{
 
     /*///////////////////////
                         Variables
@@ -88,7 +93,7 @@ contract KipuBank {
      * @param capWei Per-withdrawal maximum (wei).
      * @param maxTransactions Global maximum number of transactions (deposits).
      */
-    constructor(uint256 capWei, uint256 maxTransactions) {
+    constructor(address initialOwner,uint256 capWei, uint256 maxTransactions) Ownable(initialOwner){
         if(capWei < 0) revert noCapWei();
         WITHDRAW_MAX = capWei; 
         if(maxTransactions < 0) revert noTransactions();
@@ -167,7 +172,7 @@ contract KipuBank {
      * @dev Order of execution: PRE (nonZeroValue, underTxCap) → BODY → POST (countDeposit).
      *      Emits {depositDone}.
      */
-    function deposit() external payable nonZeroValue underTxCap countDeposit{
+    function deposit() external payable nonZeroValue underTxCap countDeposit whenNotPaused{
         balances[msg.sender] += msg.value;
         emit depositDone(msg.sender, msg.value);
     }
@@ -179,7 +184,7 @@ contract KipuBank {
      *      Uses a low-level call and reverts on failure. Emits {withdrawalDone}.
      * @param value Amount to withdraw in wei.
      */
-    function withdrawal(uint256 value) external  nonReentrant withinWithdrawCap(value) hasFunds(value) countWithdrawal{
+    function withdrawal(uint256 value) external  nonReentrant withinWithdrawCap(value) hasFunds(value) countWithdrawal whenNotPaused{
         _debit(msg.sender, value);
         (bool ok, ) = msg.sender.call{value: value}("");
         if(!ok)revert transactionFailed();
@@ -208,4 +213,24 @@ contract KipuBank {
         if (amount > bal) revert insufficientBalance(bal, amount);
         unchecked { balances[user] = bal - amount; } 
     }
+
+    /**
+ * @notice Pauses state-changing operations guarded by {whenNotPaused}.
+ * @dev Callable only by the contract owner. Uses OpenZeppelin's internal {_pause()}.
+ *      Reverts if the contract is already paused.
+ *      Typical guards: apply `whenNotPaused` to functions like `deposit` and `withdrawal`.
+ */
+function pause() external onlyOwner {
+    _pause();
+}
+
+/**
+ * @notice Unpauses state-changing operations previously paused.
+ * @dev Callable only by the contract owner. Uses OpenZeppelin's internal {_unpause()}.
+ *      Reverts if the contract is not paused.
+ *      Typical guards: apply `whenNotPaused` to resume functions like `deposit` and `withdrawal`.
+ */
+function unpause() external onlyOwner {
+    _unpause();
+}
 }
